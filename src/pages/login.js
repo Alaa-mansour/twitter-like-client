@@ -2,11 +2,15 @@ import React, { Component } from 'react'
 import withStyles from '@material-ui/core/styles/withStyles';
 import PropTypes from 'prop-types';
 import AppIcon from '../images/ape.png';
+import axios from 'axios';
+import {Link} from 'react-router-dom';
 
 // MUI Stuff
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 const styles = {
     form : {
@@ -15,7 +19,26 @@ const styles = {
     image : {
         width : '25%',
         margin: '20px auto 20px auto'
+    },
+    pageTitle:{
+        margin: '10px auto'
+    },
+    textField:{
+        margin: '10px auto'
+    },
+    button:{
+        marginTop : 20,
+        position : 'relative'
+    },
+    customError:{
+        color : 'red',
+        fontSize: '0.8rem',
+        marginTop : 10
+    },
+    progress:{
+        position : 'absolute'
     }
+
 }
 
 
@@ -26,17 +49,46 @@ export class Login extends Component {
             email : '',
             password : '',
             loading : false,
-            error : {}
+            errors : {}
         }
+    }
+
+    handleSubmit = (event)=>{
+        event.preventDefault();
+        this.setState({
+            loading : true
+        });
+        const userData = {
+            email : this.state.email,
+            password : this.state.password
+        }
+        axios.post('/login',userData)
+             .then(res=>{
+                 console.log("RESULTS",res.data);
+                 this.setState({
+                    loading : false
+                });
+                 this.props.history.push('/')
+             })
+             .catch(error=>{
+                console.log("ERRORS",error.response.data);
+                 this.setState({
+                     errors : error.response.data,
+                     loading: false
+                 })
+
+             })
+    }
+
+    handleChange = (event)=>{
+        this.setState({
+            [event.target.name]: event.target.value
+        });
     }
 
     render() {
         const { classes } = this.props;
-
-        // eslint-disable-next-line no-undef
-        handleSubmit = (event)=>{
-            console.log("hi");
-        }
+        const { errors , loading } = this.state;
 
         return (
             <Grid container className={classes.form}>
@@ -46,9 +98,26 @@ export class Login extends Component {
                     <Typography variant="h2" className={classes.pageTitle}>
                         Login
                     </Typography>
+
                     <form noValidate onSubmit={this.handleSubmit}>
                         <TextField id="email" label="Email" name="email" type="email" className={classes.textField}
-                        value={this.state.email} />
+                        helperText={errors.email} error={errors.email ? true : false} value={this.state.email} onChange={this.handleChange} fullWidth />
+
+                        <TextField id="password" label="Password" name="password" type="password" className={classes.textField}
+                        helperText={errors.password} error={errors.password ? true : false} value={this.state.password} onChange={this.handleChange} fullWidth />
+                        {errors.general && (
+                            <Typography variant="body2" className={classes.customError}>
+                                {errors.general}
+                            </Typography>
+                        )}
+                        <Button variant="contained" disabled={loading} color="primary" type="submit" className={classes.button} >
+                                Login
+                                {loading && (
+                                    <CircularProgress size={30} color="secondary" className={classes.progress}/>
+                                )}
+                        </Button>
+                        <br/>
+                        <small>Dont have an account ? sign up <Link to="/signup">here</Link> </small>
                     </form>
 
                 </Grid>
